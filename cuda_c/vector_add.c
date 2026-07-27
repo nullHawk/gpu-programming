@@ -17,12 +17,21 @@ void vecAdd(float* A_h, float* B_h, float* C_h, int n) {
     cudaMemcpy(B_d, B_h, size, cudaMemcpyHostToDevice);
 
     // Vector Addition kernal launch
+    vecAddKernel<<ceil(n/256.0), 256>>(A_d, B_d, C_d, n); // we use ceil here to pad extra threads if there is remainder.
 
     cudaMemcpy(C_h, C_d, size, cudaMemcpyDeviceToHost);
 
     cudaFree(A_d);
     cudaFree(B_d);
     cudaFree(C_d);
+}
+
+__global__
+void vecAddKernel(float* A, float* B, float* C, int n){
+    int i = threadIdx.x + blockDim.x * blockIdx.x;
+    if(i < n) { // skips computaton of extra threads added by ceil command
+        C[i] = A[i] + B[i];
+    }
 }
 
 int main(){
